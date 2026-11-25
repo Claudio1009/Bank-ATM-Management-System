@@ -1,157 +1,78 @@
-# 🏦 Banking & ATM Management System
+# Bank & ATM Management System
 
-> A console-based Banking and ATM Management System built in C++, featuring file-based persistent storage, user account management, and secure ATM operations.
-
----
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Getting Started](#getting-started)
-- [Usage](#usage)
-- [Default Admin Credentials](#default-admin-credentials)
-- [Data Storage](#data-storage)
-- [Known Limitations](#known-limitations)
-- [Author](#author)
-
----
+![C++](https://img.shields.io/badge/C++-00599C?logo=cplusplus&logoColor=white)
+![Windows](https://img.shields.io/badge/Platform-Windows-0078D4)
+![CMake](https://img.shields.io/badge/CMake-Build-064F8C?logo=cmake)
 
 ## Overview
 
-The **Banking & ATM Management System** is a C++ console application that simulates core banking operations. It provides two main modules: a **Bank Management** panel for administrative operations, and an **ATM Management** panel for customer self-service. All data is persisted locally using plain text files.
-
----
+A Windows console application that simulates bank administration and ATM operations using C++ and local file persistence. The project explores class-based design, standard library streams, account management and balance updates. It is an educational simulation, not software for real financial transactions.
 
 ## Features
 
-### 🏛️ Bank Management (Admin)
-| Feature | Description |
+| Bank administration | Customer ATM |
 |---|---|
-| New User | Register a new bank account |
-| Already User | Look up an existing account |
-| Deposit | Credit an amount to a user's account |
-| Withdraw | Debit an amount from a user's account |
-| Transfer | Move funds between two accounts |
-| Payment | Pay bills and log payment history |
-| Search | Find and display a user record by ID |
-| Edit | Update user profile information |
-| Delete | Remove a user record from the system |
-| Show All Records | Display every account in the database |
-| Payment History | View all logged bill payments |
+| Create, find, edit and delete accounts | Check balance |
+| Deposit and withdraw funds | Withdraw funds |
+| Transfer between accounts | View account details |
+| Bill payment and history | Account credential checks |
+| List account records | Return to main menu |
 
-### 🏧 ATM Management (Customer)
-| Feature | Description |
-|---|---|
-| Check Balance | Authenticate and view current balance |
-| Withdraw | Securely withdraw funds via PIN + password |
-| Account Details | View full account details after authentication |
+The administration menu exposes 11 operations, while the ATM menu exposes three customer operations.
 
----
+## Architecture
 
-## Project Structure
-
-```
-banking-system/
-│
-├── bank.cpp         # Main source file — all logic resides here
-├── bank.txt         # Auto-generated: user account database
-└── bill.txt         # Auto-generated: bill payment history log
+```mermaid
+flowchart TD
+    A[Console control panel] --> B[Bank management]
+    A --> C[ATM management]
+    B --> D[Bank class]
+    C --> D
+    D --> E[(bank.txt)]
+    D --> F[(bill.txt)]
+    D --> G[Temporary account file]
 ```
 
----
+The Bank class encapsulates account fields and implements menu navigation, persistence and operation logic. Account lookup uses sequential file scans. Updates commonly rewrite records through a temporary file before replacing the account file. Some operations check amounts and available balances.
 
-## Prerequisites
+## Persistence
 
-- **OS:** Windows (uses `<windows.h>`, `<conio.h>`, and `system("cls")`)
-- **Compiler:** MinGW (g++) or MSVC
-- **C++ Standard:** C++11 or later
+- bank.txt: account ID, name, family name, address, PIN, password, phone and balance.
+- bill.txt: bill payment history, including account ID, bill name, amount and date.
+- bank1.txt: temporary account data used during updates.
 
-> ⚠️ This project is **Windows-only** due to its use of `<conio.h>` (`getch()`) and the Windows API (`SYSTEMTIME`).
+Records are whitespace-delimited. Lookups and full-file rewrites have O(n) time complexity for n accounts.
 
----
+## Build and run
 
-## Getting Started
-
-### Compile with g++ (MinGW)
+Windows with a compatible C++ compiler (such as MinGW-w64) is required because the source uses Windows headers and console functions.
 
 ```bash
+git clone https://github.com/Claudio1009/Bank-ATM-Management-System.git
+cd Bank-ATM-Management-System
 g++ bank.cpp -o bank.exe
 ```
 
-### Run the application
+Run bank.exe from the repository directory. Alternatively, the supplied CMakeLists.txt specifies CMake 4.0 and C++26; use a toolchain supporting that configuration.
 
-```bash
-./bank.exe
-```
+The program creates data files in its working directory. Use fictional local accounts only. The current administrative credentials are defined in bank.cpp; do not reuse them elsewhere.
 
----
+## Project structure
 
-## Usage
-
-On launch, the application displays an intro screen and then presents the **Control Panel**:
-
-```
-Control Panel
-
-1. Bank Management
-2. ATM Management
-3. Exit
-```
-
-### Bank Management
-Requires admin login credentials. After successful authentication, all administrative operations are accessible from the Bank Management menu.
-
-### ATM Management
-Accessible without admin login. Customers authenticate using their **User ID**, **4-digit PIN**, and **6-character password** to perform self-service operations.
-
----
-
-## Default Admin Credentials
-
-> ⚠️ These credentials are hardcoded in the source. Change them before any real-world deployment.
-
-| Field | Value |
+| File | Purpose |
 |---|---|
-| Username | `claudiu@gmail.com` |
-| PIN | `9999` |
-| Password | `123456` |
+| bank.cpp | Bank class, console menus and operations |
+| CMakeLists.txt | Build configuration |
+| README.md | Documentation |
 
----
+## Validation and limitations
 
-## Data Storage
+Suggested manual checks include duplicate account IDs, insufficient funds, deposits, transfers, invalid input and persistence after restarting.
 
-User data is stored in plain text (`bank.txt`) with the following format per line:
+The implementation is single-process and uses plaintext credentials, floating-point balances and non-transactional file replacement. Credentials are also displayed by some operations. Future work should introduce password hashing, fixed-point balances, input validation, transactional storage, separation of UI and business logic, portable console APIs and automated tests.
 
-```
-<UserID> <Name> <FatherName> <Address> <PIN> <Password> <PhoneNumber> <Balance>
-```
-
-Bill payment history is stored in `bill.txt`:
-
-```
-<UserID> <BillName> <Amount> <DD/MM/YYYY>
-```
-
----
-
-## Known Limitations
-
-- **No encryption** — sensitive data (PIN, password, balance) is stored in plain text.
-- **Single-word fields only** — names and addresses containing spaces will be read incorrectly.
-- **Windows-only** — not portable to Linux/macOS without replacing `<conio.h>` and Windows API calls.
-- **Hardcoded admin credentials** — should be stored securely and made configurable.
-- **No input validation** — malformed input may cause unexpected behavior.
-- **Concurrent access not supported** — file-based storage is not safe for simultaneous use.
-
----
+No successful build or automated test result is claimed.
 
 ## Author
 
-**Ciupitu Claudiu-Marius**
-
----
-
-> 📌 *This project was developed as an educational exercise in C++ OOP, file I/O, and console application design.*
+Claudiu Marius Ciupitu — [GitHub](https://github.com/Claudio1009)
